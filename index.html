@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>检测报告真伪查询系统</title>
+<style>
+  :root{ --primary:#2f6fed; --ok:#16a34a; --err:#dc2626; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    min-height:100vh;
+    background:linear-gradient(155deg,#edf3fc 0%,#dbe7f6 55%,#cfe0f3 100%);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .card{
+    width:100%;max-width:540px;background:#fff;border-radius:18px;
+    box-shadow:0 14px 44px rgba(28,55,110,.14);
+    padding:42px 38px 30px;
+  }
+  .head{display:flex;align-items:center;gap:14px;margin-bottom:6px;}
+  .badge{
+    width:52px;height:52px;border-radius:14px;flex:none;
+    background:linear-gradient(135deg,#3b82f6,#1d4fc0);
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    box-shadow:0 6px 16px rgba(43,102,216,.35);
+  }
+  h1{font-size:21px;color:#14213d;letter-spacing:.5px;}
+  .sub{color:#6b7a99;font-size:13px;margin-top:2px;letter-spacing:1px;}
+  .desc{color:#5b6b8c;font-size:14px;line-height:1.7;margin:22px 0 18px;}
+  .field label{display:block;font-size:13px;color:#33415e;font-weight:600;margin-bottom:8px;}
+  .input-row{display:flex;gap:10px;}
+  input{
+    flex:1;height:48px;border:1.5px solid #d7e0ee;border-radius:10px;
+    padding:0 16px;font-size:16px;letter-spacing:1.5px;color:#14213d;
+    outline:none;background:#f8fafd;text-transform:uppercase;
+  }
+  input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(47,111,237,.12);}
+  button{
+    height:48px;padding:0 26px;border:none;border-radius:10px;flex:none;
+    background:linear-gradient(135deg,#3b82f6,#1d4fc0);color:#fff;font-size:15px;font-weight:600;
+    cursor:pointer;letter-spacing:2px;box-shadow:0 6px 16px rgba(43,102,216,.32);
+    transition:transform .06s ease, box-shadow .2s ease;
+  }
+  button:active{transform:translateY(1px);}
+  .result{display:none;margin-top:22px;border-radius:12px;padding:18px 18px 16px;font-size:14px;}
+  .result.show{display:block;}
+  .result.ok{background:#f0faf3;border:1px solid #bfe8cd;color:#14532d;}
+  .result.no{background:#fdf3f3;border:1px solid #f3c6c6;color:#7f1d1d;}
+  .result .r-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;margin-bottom:10px;}
+  .result .r-row{display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed rgba(0,0,0,.08);font-size:13px;}
+  .result .r-row b{font-weight:600;}
+  .foot{color:#93a2bd;font-size:12px;text-align:center;margin-top:26px;line-height:1.7;}
+  @media (max-width:480px){
+    .card{padding:30px 20px 24px;}
+    .input-row{flex-direction:column;}
+    button{width:100%;}
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head">
+    <div class="badge">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7"/><path d="M12 2v13"/><path d="m5 8 7-6 7 6"/>
+      </svg>
+    </div>
+    <div>
+      <h1>检测报告真伪查询系统</h1>
+      <div class="sub">REPORT VERIFICATION SERVICE</div>
+    </div>
+  </div>
+
+  <p class="desc">请输入检测报告编号，系统将自动校验该报告的真实性与有效性。</p>
+
+  <div class="field">
+    <label for="reportNo">检测报告编号</label>
+    <div class="input-row">
+      <input id="reportNo" type="text" placeholder="请输入报告编号" maxlength="40" autocomplete="off" spellcheck="false" />
+      <button id="queryBtn" type="button">立即查询</button>
+    </div>
+  </div>
+
+  <div id="result" class="result">
+    <div id="rTitle" class="r-title"></div>
+    <div id="rBody"></div>
+  </div>
+
+  <div class="foot">本页面仅用于检测报告编号的真伪查询<br/>查询结果以系统展示为准</div>
+</div>
+
+<script>
+(function(){
+  var PREFIX = "ZJTA290702";
+  var SUFFIX = "GR";
+  var MIN_SEQ = 4779, MAX_SEQ = 4792;
+  function isValidNo(s){
+    if(s.length !== PREFIX.length + 4 + SUFFIX.length) return false;
+    if(s.slice(0,PREFIX.length) !== PREFIX) return false;
+    if(s.slice(-SUFFIX.length) !== SUFFIX) return false;
+    var mid = s.slice(PREFIX.length, PREFIX.length+4);
+    if(!/^\d{4}$/.test(mid)) return false;
+    var n = parseInt(mid, 10);
+    return n >= MIN_SEQ && n <= MAX_SEQ;
+  }
+  var input = document.getElementById('reportNo');
+  var btn = document.getElementById('queryBtn');
+  var result = document.getElementById('result');
+  var rTitle = document.getElementById('rTitle');
+  var rBody = document.getElementById('rBody');
+
+  function pad(s){return String(s).padStart(2,'0');}
+  function nowStr(){
+    var d=new Date();
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  }
+  function show(cls,title,rows){
+    result.className='result show '+cls;
+    rTitle.innerHTML=title;
+    var html='';
+    rows.forEach(function(r){ html+='<div class="r-row"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>'; });
+    rBody.innerHTML=html;
+  }
+  function query(){
+    var val=input.value.trim().toUpperCase();
+    if(!val){ show('no','请输入检测报告编号',[['提示','编号不能为空']]); return; }
+    if(isValidNo(val)){
+      show('ok',
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>查询结果：该检测报告真实有效',
+        [['检测报告编号',val],['报告状态','真实有效（Valid）'],['查询时间',nowStr()]]);
+    } else {
+      show('no',
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>未查询到该报告信息',
+        [['检测报告编号',val],['报告状态','未查询到相关记录'],['查询时间',nowStr()]]);
+    }
+  }
+  btn.addEventListener('click',query);
+  input.addEventListener('keydown',function(e){ if(e.key==='Enter') query(); });
+})();
+</script>
+</body>
+</html>
